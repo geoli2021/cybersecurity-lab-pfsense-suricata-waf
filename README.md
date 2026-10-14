@@ -1,88 +1,110 @@
-# Homelab de Segurança: Firewall, WAF e SIEM
+Aqui está a documentação completa e formatada com sintaxe Markdown padronizada (utilizando blocos de código sem a sintaxe de linguagem que costuma causar problemas na cópia):
 
-Laboratório em VirtualBox para praticar segmentação de rede, firewall (pfSense), WAF (ModSecurity) e monitoramento/detecção (Wazuh). Cada fase é documentada com configuração, testes e lições aprendidas.
+# 🛡️ Cybersecurity Home Lab: Perimeter Security, IPS & WAF Automation
 
-> Todo o ambiente é isolado e usa apenas dados fictícios. Nenhuma informação de redes ou sistemas reais é publicada.
+Este repositório documenta a implementação de um laboratório de cibersegurança virtualizado. O objetivo principal do ambiente é a simulação de ataques de rede e aplicação web, acompanhados de mecanismos autônomos de detecção e prevenção de ameaças em tempo real (IPS e WAF).
 
-## Objetivos
+---
 
-- Entender na prática o fluxo de tráfego entre zonas WAN, LAN e DMZ.
-- Criar e testar regras de firewall, NAT e port forwarding.
-- Validar o efeito de cada regra com Nmap (antes e depois).
-- Proteger uma aplicação vulnerável com WAF e ajustar falsos positivos.
-- Coletar logs e gerar alertas em um SIEM, mapeando detecções ao MITRE ATT&CK.
+## 📐 Arquitetura do Ambiente
 
-## Arquitetura
+O ambiente é virtualizado via **VirtualBox** e composto por três entidades principais:
 
-| Zona | Interface | VirtualBox | Sub-rede | Função |
-|---|---|---|---|---|
-| WAN | em0 | NAT | DHCP (10.0.2.0/24) | Saída para a internet |
-| LAN | em1 | Rede Interna `LAN` | 192.168.1.0/24 | Estação atacante (Kali) e administração |
-| DMZ | em2 | Rede Interna `DMZ` | 192.168.2.0/24 | Servidor web alvo com WAF |
+* **Attacker (Kali Linux):** Origem das simulações de varredura, exploração e requisições maliciosas.
+* **Firewall / IPS (pfSense CE + Suricata):** Borda de rede com inspeção profunda de pacotes (DPI) e bloqueio autônomo de IPs atacantes.
+* **Web / Application Server (Ubuntu Server + Nginx / ModSecurity WAF):** Servidor de aplicações protegido por WAF em camada de aplicação (Camada 7).
 
-Fluxo resumido:
+---
 
-    Internet -> [WAN em0] -> pfSense -> [LAN em1] -> Kali Linux
-                                     -> [DMZ em2] -> Ubuntu + DVWA + ModSecurity
+## 🚀 Módulo 1: pfSense & Suricata (IPS)
 
-O diagrama completo fica em `docs/network-diagram.png`.
+### 1. Visão Geral
 
-## Máquinas virtuais
+O **Suricata** está configurado em **Legacy Mode (IPS)** no pfSense, monitorando o tráfego da interface. Quando uma assinatura de ataque (como varredura de portas via Nmap ou requisições HTTP anômalas) é disparada, o Suricata insere automaticamente o IP atacante na tabela de bloqueio do firewall.
 
-| VM | Sistema | Função | RAM sugerida |
-|---|---|---|---|
-| pfSense | pfSense (FreeBSD 64-bit) | Firewall/roteador | 2 GB |
-| Kali | Kali Linux | Atacante | 2 GB |
-| Alvo web | Ubuntu Server + DVWA | Aplicação vulnerável | 2 GB |
-| SIEM | Wazuh (OVA) | Coleta e detecção | 4 GB |
+### 2. Configurações Chave no Suricata
 
-## Fases
+* **Interface Settings:** Block Offenders **[X]**
+* **IPS Mode:** Legacy Mode
+* **Which IP to Block:** SRC (Origem da ameaça)
+* **IP Pass List:** none *(Garante que máquinas na mesma sub-rede local/WAN não sejam ignoradas pela whitelist padrão)*
 
-| Fase | Descrição | Status |
-|---|---|---|
-| [01 - Instalação do pfSense](01-pfsense-setup/) | VM, interfaces, instalação, troubleshooting | Em andamento |
-| [02 - Regras de firewall e DMZ](02-firewall-rules/) | Regras, NAT, segmentação, testes com Nmap | Planejado |
-| [03 - WAF com ModSecurity](03-waf-modsecurity/) | OWASP CRS, SQLi/XSS, falsos positivos | Planejado |
-| [04 - SIEM com Wazuh](04-siem-wazuh/) | Agentes, regras customizadas, ATT&CK | Planejado |
+### 3. Validação Prática do Bloqueio
 
-## Destaques a entregar
+**Ataques Simulados (Kali Linux):**
 
-- [ ] Comparativo Nmap antes e depois de cada regra de firewall.
-- [ ] Prova de que a DMZ não inicia conexões para a LAN.
-- [ ] Regra customizada no ModSecurity e ajuste de falsos positivos.
-- [ ] Detecção de brute force SSH e port scan no Wazuh.
+```
+nmap -p 80,443 -A --script http-enum <IP_DO_PFSENSE>
 
-## Problemas resolvidos
+```
 
-| Sintoma | Causa | Solução |
-|---|---|---|
-| `CPU doesn't support long mode` | VM 32 bits ou virtualização indisponível | Tipo FreeBSD (64-bit), VT-x/AMD-V ativo na BIOS e Hyper-V desativado |
-| `Cannot connect to installer daemon` | Placa de rede PCnet não suportada | Trocar para Intel PRO/1000 MT Desktop (82540EM) |
+```
+curl -A "nikto" http://<IP_DO_PFSENSE>/
 
-## Estrutura do repositório
+```
 
-- `README.md`
-- `01-pfsense-setup/`
-- `02-firewall-rules/`
-- `03-waf-modsecurity/`
-- `04-siem-wazuh/`
-- `evidence/` (saídas do Nmap, logs e capturas)
-- `docs/` (diagramas e tabelas de IP)
+**Resultado:**
+O Suricata captura o pacote, dispara a regra `1:2200025` (`SURICATA ICMPv4 unknown code`) ou de User-Agent malicioso, inserindo o IP do Kali Linux na lista **Last Hosts Blocked by Suricata** em tempo real, cortando qualquer tráfego subsequente.
 
-## Boas práticas adotadas
+---
 
-- Rede totalmente isolada (NAT + redes internas), sem modo Bridged.
-- Scans e ataques executados somente dentro das redes do laboratório.
-- Senhas, chaves e configurações sensíveis removidas antes de publicar.
-- Snapshots das VMs antes de mudanças importantes.
+## 🧱 Módulo 2: Ubuntu Server & ModSecurity (WAF)
 
-## Referências
+### 1. Visão Geral
 
-- [Documentação do pfSense](https://docs.netgate.com/pfsense/en/latest/)
-- [Documentação do Wazuh](https://documentation.wazuh.com/)
-- [OWASP Core Rule Set](https://coreruleset.org/)
-- [MITRE ATT&CK](https://attack.mitre.org/)
+Para proteção em Camada 7 (HTTP/HTTPS), o **Ubuntu Server** executa o Nginx integrado com a engine **ModSecurity v3** e o conjunto de regras **OWASP Core Rule Set (CRS)**.
 
-## Autor
+### 2. Passos de Instalação no Ubuntu Server
 
-[Getulio Coelho Oliveira]
+```
+sudo apt update && sudo apt install -y nginx libmodsecurity3 libmodsecurity-dev modsecurity-crs
+
+```
+
+```
+sudo sed -i 's/SecRuleEngine DetectionOnly/SecRuleEngine On/' /etc/modsecurity/modsecurity.conf
+
+```
+
+```
+sudo systemctl restart nginx
+
+```
+
+### 3. Validação Prática do WAF
+
+**Ataques Simulados (SQL Injection / Path Traversal):**
+
+```
+curl -i "http://<IP_DO_UBUNTU>/?id=1' OR '1'='1"
+
+```
+
+```
+curl -i "http://<IP_DO_UBUNTU>/../../../../etc/passwd"
+
+```
+
+**Resultado:**
+O Nginx/ModSecurity bloqueia a requisição imediatamente com um código de status **HTTP 403 Forbidden**, e os logs do evento são gravados em `/var/log/nginx/error.log` ou `/var/log/modsec_audit.log`.
+
+---
+
+## 📊 Matriz de Testes & Validação
+
+| Vetor de Ataque | Ferramenta | Camada OSI | Componente de Defesa | Ação Tomada |
+| --- | --- | --- | --- | --- |
+| **Port Scanning** | Nmap | Camada 3/4 | Suricata (pfSense) | IP Bloqueado na tabela de Firewall |
+| **User-Agent Scanner** | cURL / Nikto | Camada 7 | Suricata (pfSense) | IP Bloqueado na tabela de Firewall |
+| **SQL Injection (SQLi)** | cURL / sqlmap | Camada 7 | ModSecurity WAF | HTTP 403 Forbidden |
+| **Directory Traversal** | cURL | Camada 7 | ModSecurity WAF | HTTP 403 Forbidden |
+
+---
+
+## 🛠️ Como Reproduzir este Laboratório
+
+1. Importar as VMs no **VirtualBox** e configurar as placas de rede (Rede Interna / Host-Only).
+2. Configurar o **pfSense** e instalar o pacote do Suricata via *Package Manager*.
+3. Ajustar a `IP Pass List` do Suricata para `none` e ativar o `Block Offenders`.
+4. Subir o **Ubuntu Server** com Nginx + ModSecurity v3.
+5. Executar os comandos de teste a partir da máquina **Kali Linux** e monitorar as abas **Services > Suricata > Blocks** no pfSense.
