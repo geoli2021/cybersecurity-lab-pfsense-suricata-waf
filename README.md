@@ -1,5 +1,3 @@
-Aqui está a documentação completa e formatada com sintaxe Markdown padronizada (utilizando blocos de código sem a sintaxe de linguagem que costuma causar problemas na cópia):
-
 # 🛡️ Cybersecurity Home Lab: Perimeter Security, IPS & WAF Automation
 
 Este repositório documenta a implementação de um laboratório de cibersegurança virtualizado. O objetivo principal do ambiente é a simulação de ataques de rede e aplicação web, acompanhados de mecanismos autônomos de detecção e prevenção de ameaças em tempo real (IPS e WAF).
