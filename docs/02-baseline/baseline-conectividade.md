@@ -37,21 +37,14 @@ Ubuntu Server (192.168.1.103)
 ```
 
 ---
-
 ## Endereçamento e Componentes
 
 | Dispositivo | Interface / Rede | Endereço | Função |
-| --- | --- | --- | --- |
-| pfSense | WAN | 10.0.2.15/24 | Borda de rede, Firewall e Suricata IPS (Legacy Mode)
-
- |
+|---|---|---|---|
+| pfSense | WAN | 10.0.2.15/24 | Borda de rede, Firewall e Suricata IPS (Legacy Mode) |
 | pfSense | LAN | 192.168.1.1/24 | Gateway e inspeção da rede interna |
-| Kali Linux | WAN / Attacker | 10.0.2.4/24 | Origem das simulações de ataque e testes de carga
-
- |
-| Ubuntu Server | LAN | 192.168.1.103/24 | Servidor Web, ModSecurity v3 WAF e análise de logs com Wazuh SIEM
-
- |
+| Kali Linux | WAN / Attacker | 10.0.2.4/24 | Origem das simulações de ataque e testes de carga |
+| Ubuntu Server | LAN | 192.168.1.103/24 | Servidor Web, ModSecurity v3 WAF e análise de logs com Wazuh SIEM |
 | VirtualBox NAT | Gateway | 10.0.2.2 | Gateway upstream |
 | VirtualBox NAT | DNS | 10.0.2.3 | DNS upstream |
 
