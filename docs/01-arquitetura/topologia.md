@@ -39,17 +39,11 @@ O pfSense atua como firewall de borda e IPS central com Suricata, interceptando 
 ## Componentes
 
 | Componente | Interface/Rede | Endereço | Função |
-| --- | --- | --- | --- |
-| pfSense | WAN | 10.0.2.15/24 | Acesso externo, controle de borda e Suricata IPS (Legacy Mode)
-
- |
+|---|---|---|---|
+| pfSense | WAN | 10.0.2.15/24 | Acesso externo, controle de borda e Suricata IPS (Legacy Mode) |
 | pfSense | LAN | 192.168.1.1/24 | Gateway, firewall e inspeção da rede interna |
-| Kali Linux | WAN / Attacker | 10.0.2.4 | Estação de testes ofensivos (Nmap, cURL, payloads)
-
- |
-| Ubuntu Server | LAN | 192.168.1.103/24 | Servidor web (Nginx/Apache), WAF (ModSecurity v3) e SIEM (Wazuh)
-
- |
+| Kali Linux | WAN / Attacker | 10.0.2.4 | Estação de testes ofensivos (Nmap, cURL, payloads) |
+| Ubuntu Server | LAN | 192.168.1.103/24 | Servidor web (Nginx/Apache), WAF (ModSecurity v3) e SIEM (Wazuh) |
 | VirtualBox NAT | Gateway | 10.0.2.2 | Saída da WAN para a Internet |
 | VirtualBox NAT | DNS | 10.0.2.3 | Resolução DNS upstream |
 
