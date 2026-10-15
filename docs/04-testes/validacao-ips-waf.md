@@ -38,17 +38,11 @@ Ubuntu Server (ModSecurity v3 WAF & Wazuh SIEM)
 ## Configuração Esperada
 
 | Item | Valor Esperado | Função / Mecanismo |
-| --- | --- | --- |
-| Endereço do Atacante (Kali) | 10.0.2.4 | Origem das simulações ofensivas (Camada 3, 4 e 7)
-
- |
-| IP WAN do pfSense | 10.0.2.15 | Borda de rede com Suricata IPS (Legacy Mode)
-
- |
+|---|---|---|
+| Endereço do Atacante (Kali) | 10.0.2.4 | Origem das simulações ofensivas (Camada 3, 4 e 7) |
+| IP WAN do pfSense | 10.0.2.15 | Borda de rede com Suricata IPS (Legacy Mode) |
 | IP LAN do pfSense | 192.168.1.1 | Gateway e inspeção de rede interna |
-| IP do Ubuntu Server | 192.168.1.103 | Servidor Web (Nginx/Apache), ModSecurity WAF e Wazuh Manager
-
- |
+| IP do Ubuntu Server | 192.168.1.103 | Servidor Web (Nginx/Apache), ModSecurity WAF e Wazuh Manager |
 | Gateway Upstream / DNS | 10.0.2.2 / 10.0.2.3 | Saída NAT do VirtualBox e resolução DNS |
 
 ---
