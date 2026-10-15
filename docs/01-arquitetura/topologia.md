@@ -1,5 +1,3 @@
-Aqui está o documento atualizado com as tecnologias ativas do laboratório (**Suricata IPS**, **ModSecurity v3 / OWASP CRS WAF no Nginx/Ubuntu Server**, **SIEM Wazuh** e o IP real do atacante Kali), mantendo exatamente a estrutura limpa e copiável sem a sintaxe de linguagem em blocos de código:
-
 # Topologia do Laboratório
 
 ## Visão geral
