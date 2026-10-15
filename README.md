@@ -71,7 +71,7 @@ sudo systemctl restart nginx
 
 ### 3. Validação Prática do WAF
 
-**Ataques Simulados (SQL Injection / Path Traversal):**
+**Ataques Simulados (SQL Injection / Path Traversal / XSS):**
 
 ```
 curl -i "http://192.168.1.103/?id=1%27%20OR%20%271%27=%271"
@@ -80,6 +80,11 @@ curl -i "http://192.168.1.103/?id=1%27%20OR%20%271%27=%271"
 
 ```
 curl -i "http://192.168.1.103/?page=%2e%2e%2f%2e%2e%2f%2e%2e%2fetc/passwd"
+
+```
+
+```
+curl -i "http://192.168.1.103/?q=%3Cscript%3Ealert(1)%3C/script%3E"
 
 ```
 
