@@ -74,12 +74,12 @@ sudo systemctl restart nginx
 **Ataques Simulados (SQL Injection / Path Traversal):**
 
 ```
-curl -i "http://<IP_DO_UBUNTU>/?id=1' OR '1'='1"
+curl -i "http://192.168.1.103/?id=1%27%20OR%20%271%27=%271"
 
 ```
 
 ```
-curl -i "http://<IP_DO_UBUNTU>/../../../../etc/passwd"
+curl -i "http://192.168.1.103/?page=%2e%2e%2f%2e%2e%2f%2e%2e%2fetc/passwd"
 
 ```
 
