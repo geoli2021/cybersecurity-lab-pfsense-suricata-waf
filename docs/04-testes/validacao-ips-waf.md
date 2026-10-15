@@ -177,18 +177,10 @@ Os logs de auditoria gravados pelo ModSecurity no Nginx/Ubuntu são ingeridos pe
 | Teste | Mecanismo de Defesa | Vetor/Payload | Resultado |
 | --- | --- | --- | --- |
 | **Resolução DNS & HTTPS** | pfSense Unbound | Consultas externas | Aprovado |
-| **Bloqueio de Scan / Probe** | Suricata IPS | Nmap / ICMP Probe | Aprovado (IP `10.0.2.4` Bloqueado)
-
- |
-| **Proteção SQLi (Camada 7)** | ModSecurity WAF | `%27%20OR%20%271%27=%271` | Aprovado (HTTP 403 Forbidden)
-
- |
-| **Proteção XSS (Camada 7)** | ModSecurity WAF | `%3Cscript%3E` | Aprovado (HTTP 403 Forbidden)
-
- |
-| **Proteção Path Traversal** | ModSecurity WAF | `%2e%2e%2f` | Aprovado (HTTP 403 Forbidden)
-
- |
+| **Bloqueio de Scan / Probe** | Suricata IPS | Nmap / ICMP Probe | Aprovado (IP `10.0.2.4` Bloqueado) |
+| **Proteção SQLi (Camada 7)** | ModSecurity WAF | `%27%20OR%20%271%27=%271` | Aprovado (HTTP 403 Forbidden) |
+| **Proteção XSS (Camada 7)** | ModSecurity WAF | `%3Cscript%3E` | Aprovado (HTTP 403 Forbidden) |
+| **Proteção Path Traversal** | ModSecurity WAF | `%2e%2e%2f` | Aprovado (HTTP 403 Forbidden) |
 | **Alertas no SIEM** | Wazuh Manager | Regras 100201 / 100202 | Aprovado (Eventos classificados) |
 
 ---
