@@ -1,108 +1,170 @@
-# Baseline de Conectividade
+# Baseline de Conectividade e Segurança
 
-**Data:** 30/09/2026  
-**Ambiente:** Laboratório de redes e segurança em VirtualBox  
-**Status:** Validado
+**Data:** 14/10/2026
+
+**Ambiente:** Laboratório de Redes, IPS e WAF em VirtualBox
+
+**Status:** Validado e Operacional
+
+---
 
 ## Objetivo
 
-Registrar o estado inicial funcional da rede antes da implementação da DMZ e de controles adicionais de segurança.
+Registrar o estado funcional validado da rede, do perímetro e das camadas de aplicação após a implementação do **pfSense CE + Suricata (IPS)**, do **Ubuntu Server com Nginx + ModSecurity v3 (WAF)** e da integração de logs com o **Wazuh SIEM**.
 
-## Topologia atual
+---
+
+## Topologia Atual
 
 ```text
-Kali Linux
+Atacante (Kali Linux)
+  | 10.0.2.4
   |
-  | LAN: 192.168.1.0/24
+WAN / External
+  | 10.0.2.0/24 (NAT Gateway: 10.0.2.2 | DNS: 10.0.2.3)
   |
-pfSense
-  | LAN: 192.168.1.1
+pfSense CE + Suricata IPS
   | WAN: 10.0.2.15
+  | LAN: 192.168.1.1
   |
-VirtualBox NAT
-  | Gateway: 10.0.2.2
-  | DNS: 10.0.2.3
+Rede Interna / LAN (192.168.1.0/24)
   |
-Internet
+Ubuntu Server (192.168.1.103)
+  - Nginx + ModSecurity v3 (WAF)
+  - OWASP Core Rule Set (CRS)
+  - Agente/Manager Wazuh SIEM
+
 ```
 
-## Endereçamento
+---
 
-| Dispositivo | Interface | Endereço | Função |
-|---|---|---:|---|
-| pfSense | LAN | 192.168.1.1/24 | Gateway e DNS da LAN |
-| pfSense | WAN | 10.0.2.15 | Saída para a Internet |
-| Kali Linux | LAN | 192.168.1.100 | Máquina de testes |
+## Endereçamento e Componentes
+
+| Dispositivo | Interface / Rede | Endereço | Função |
+| --- | --- | --- | --- |
+| pfSense | WAN | 10.0.2.15/24 | Borda de rede, Firewall e Suricata IPS (Legacy Mode)
+
+ |
+| pfSense | LAN | 192.168.1.1/24 | Gateway e inspeção da rede interna |
+| Kali Linux | WAN / Attacker | 10.0.2.4/24 | Origem das simulações de ataque e testes de carga
+
+ |
+| Ubuntu Server | LAN | 192.168.1.103/24 | Servidor Web, ModSecurity v3 WAF e análise de logs com Wazuh SIEM
+
+ |
 | VirtualBox NAT | Gateway | 10.0.2.2 | Gateway upstream |
 | VirtualBox NAT | DNS | 10.0.2.3 | DNS upstream |
 
-## Serviços validados
+---
 
-- O Kali alcança o endereço LAN do pfSense em `192.168.1.1`.
-- O pfSense responde às consultas DNS na porta 53.
-- O DNS `example.com` é resolvido pelo Kali através do pfSense.
-- O pfSense encaminha as consultas ao DNS `10.0.2.3`.
-- O Kali acessa sites HTTPS pela WAN do pfSense.
-- O NAT de saída está funcionando.
+## Serviços e Defesas Validadas
 
-## Evidências
+* **Navegação e Resolução DNS:** O tráfego de saída utiliza NAT pelo pfSense e o DNS Resolver responde na porta 53.
+* **Prevenção de Intrusão em Borda (IPS):** O Suricata em *Legacy Mode* monitora a interface do pfSense, identificando e inserindo o IP do atacante (`10.0.2.4`) na lista `Last Hosts Blocked`.
 
-### Consulta DNS
 
-Comando executado:
+* **Proteção de Aplicação Web (WAF):** O ModSecurity v3 com OWASP CRS intercepta requisições HTTP maliciosas (SQLi, XSS e Path Traversal), retornando o status `HTTP/1.1 403 Forbidden` no Nginx.
 
-```bash
+
+* **Correlação de Eventos (SIEM):** Regras personalizadas no `local_rules.xml` do Wazuh Manager categorizam e geram alertas críticos (`Rule ID 100201` e `100202`) para eventos interceptados pelo WAF.
+
+---
+
+## Evidências de Testes
+
+### 1. Teste de Resolução DNS e Conectividade Externa
+
+Comando executado no Kali Linux:
+
+```text
 nslookup example.com 192.168.1.1
+
 ```
 
-Resultado esperado:
+Resultado:
 
 ```text
 Server: 192.168.1.1
 Address: 192.168.1.1#53
 
 Name: example.com
-Address: 104.20.23.154
-Address: 172.66.147.243
+Address: 93.184.215.14
+
 ```
 
-### Teste HTTPS
+---
 
-Comando executado:
+### 2. Validação do Suricata IPS (pfSense)
 
-```bash
-curl -I [https://example.com](https://example.com)
+Comando executado no Kali Linux (`10.0.2.4`):
+
+```text
+nmap -p 80,443 -A --script http-enum 10.0.2.15
+
 ```
 
 Resultado:
+O Suricata dispara o alerta `SURICATA ICMPv4 unknown code` (SID `1:2200025`), inserindo o IP `10.0.2.4` na tabela de bloqueio e cortando todo o tráfego subsequente.
 
+---
+
+### 3. Validação do ModSecurity WAF (Camada 7)
+
+Comando executado via CMD/Terminal apontado para a aplicação (`192.168.1.103`):
+
+* **SQL Injection (SQLi):**
 ```text
-HTTP/2 200
-server: cloudflare
-content-type: text/html; charset=utf-8
+curl -i "[http://192.168.1.103/?id=1%27%20OR%20%271%27=%271](http://192.168.1.103/?id=1%27%20OR%20%271%27=%271)"
+
 ```
 
-## Critério de sucesso
 
-O baseline foi considerado aprovado porque:
-
-1. O cliente Kali obteve resposta DNS através do pfSense.
-2. O nome `example.com` foi convertido em endereços IP.
-3. O acesso HTTPS externo funcionou.
-4. O tráfego da LAN atravessou o pfSense usando NAT.
-
-## Próxima alteração planejada
-
-Adicionar a interface DMZ com a rede:
-
+* **Cross-Site Scripting (XSS):**
 ```text
-192.168.2.0/24
+curl -i "[http://192.168.1.103/?q=%3Cscript%3Ealert(1)%3C/script%3E](http://192.168.1.103/?q=%3Cscript%3Ealert(1)%3C/script%3E)"
+
 ```
 
-Endereço do pfSense na DMZ:
 
+* **Path Traversal:**
 ```text
-192.168.2.1
+curl -i "[http://192.168.1.103/?page=%2e%2e%2f%2e%2e%2f%2e%2e%2fetc/passwd](http://192.168.1.103/?page=%2e%2e%2f%2e%2e%2f%2e%2e%2fetc/passwd)"
+
 ```
 
-A implementação da DMZ deverá ser comparada com este baseline para verificar se a conectividade da LAN continua funcionando e se o isolamento entre LAN e DMZ está correto.
+
+
+Resultado retornado pelo servidor em todas as simulações:
+
+```text
+HTTP/1.1 403 Forbidden
+Server: nginx/1.20.2
+Date: Thu, 08 Oct 2026 13:39:55 GMT
+Content-Type: text/html
+Content-Length: 153
+Connection: keep-alive
+
+<html>
+<head><title>403 Forbidden</title></head>
+<body>
+<center><h1>403 Forbidden</h1></center>
+<hr><center>nginx/1.20.2</center>
+</body>
+</html>
+
+```
+
+---
+
+## Critério de Sucesso
+
+O baseline do ambiente foi considerado aprovado porque:
+
+1. A resolução DNS externa e a conectividade de saída estão operacionais através do pfSense.
+2. O **Suricata IPS** identifica tentativas de varredura e aplica bloqueios automáticos no nível de firewall.
+
+
+3. O **ModSecurity v3 WAF** no Nginx barra com sucesso requisições OWASP Top 10 emitindo o código `HTTP 403 Forbidden`.
+
+
+4. Os logs do WAF são ingeridos e correlacionados corretamente via regras no **Wazuh SIEM**.
